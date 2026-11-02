@@ -673,6 +673,16 @@
     });
 
     enterVrBtn.addEventListener('click', () => {
+      // Force native full-screen mode on browser canvas for mobile VR compatibility
+      const docEl = document.documentElement;
+      if (docEl.requestFullscreen) {
+        docEl.requestFullscreen().catch(() => {});
+      } else if (docEl.webkitRequestFullscreen) { /* Safari / iOS */
+        docEl.webkitRequestFullscreen();
+      } else if (docEl.msRequestFullscreen) { /* IE11 */
+        docEl.msRequestFullscreen();
+      }
+
       if (sceneEl.hasLoaded) {
         sceneEl.enterVR(); // Forces A-Frame into VR / Fullscreen Stereoscopic mode
       }
