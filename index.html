@@ -119,10 +119,10 @@
 
     <!-- CAMERA RIG (Starts bobbing at surface) -->
     <a-entity id="rig" position="0 0 0" animation="property: position; dir: alternate; dur: 2500; to: 0 0.8 0; loop: true; easing: easeInOutSine">
-      <a-camera id="camera" look-controls="pointerLockEnabled: false" wasd-controls="enabled: false" near="0.1">
+      <a-camera id="camera" look-controls="pointerLockEnabled: false; magicWindowTrackingEnabled: true" wasd-controls="enabled: false" near="0.1">
         
-        <!-- 3D VR HUD (Visible inside Cardboard/Headsets when HTML is hidden) -->
-        <a-entity position="0 -0.3 -0.8">
+        <!-- 3D VR HUD Container (hidden in VR mode) -->
+        <a-entity id="vr-hud-container" position="0 -0.3 -0.8">
           <a-text id="vr-depth-display" value="DEPTH: 0.0 M" color="#00ffff" align="center" width="1.2" opacity="0.85" font="monoid" text=""></a-text>
           <a-text id="vr-zone-display" value="Phase 1: Epipelagic" color="#aaddff" align="center" width="0.7" position="0 -0.08 0" opacity="0.6" font="monoid" text=""></a-text>
         </a-entity>
@@ -676,6 +676,21 @@
       if (sceneEl.hasLoaded) {
         sceneEl.enterVR(); // Forces A-Frame into VR / Fullscreen Stereoscopic mode
       }
+    });
+
+    // --- VR Display Management ---
+    // Automatically hide all 2D HTML menus and 3D VR HUD text when VR mode is active
+    sceneEl.addEventListener('enter-vr', () => {
+      document.getElementById('ui-overlay').style.display = 'none';
+      const vrHud = document.getElementById('vr-hud-container');
+      if (vrHud) vrHud.setAttribute('visible', 'false');
+    });
+    
+    // Restore the 2D HTML menus and 3D VR HUD when exiting VR mode
+    sceneEl.addEventListener('exit-vr', () => {
+      document.getElementById('ui-overlay').style.display = 'flex';
+      const vrHud = document.getElementById('vr-hud-container');
+      if (vrHud) vrHud.setAttribute('visible', 'true');
     });
 
     // Safely Initialize Scene Elements
