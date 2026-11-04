@@ -72,25 +72,27 @@
       <h2 class="text-2xl md:text-3xl font-extrabold text-white mb-4 tracking-wide">MEGALOHYDROTHALASSOPHOBIA</h2>
       <p class="text-slate-300 text-sm mb-6 leading-relaxed">
         You will sink uncontrollably into the ocean depths, unable to stop or turn back. Put on headphones and look around 360°.
+        <br><br>
+        <strong class="text-cyan-400 font-bold">GOOGLE CARDBOARD / VR HEADSETS:</strong><br>Click "Enter the Depths" first to initialize audio, then click the <strong>👓 ENTER VR</strong> button at the bottom of the screen.
       </p>
       <button id="start-btn" class="w-full py-4 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white font-bold rounded-xl shadow-lg transition-all transform active:scale-95 tracking-wider text-lg border border-cyan-300/40">
         ENTER THE DEPTHS
       </button>
     </div>
 
-    <!-- Bottom Controls, Sound Toggle & VR Launcher -->
+    <!-- Bottom Controls & Sound Toggle -->
     <div class="flex justify-between items-end w-full">
       <div class="text-xs text-slate-300 bg-slate-950/80 px-3 py-2 rounded-lg border border-slate-800">
         [Look Around 360° • Mouse / VR Headset]
       </div>
-      <div class="flex gap-2 pointer-events-auto">
+      <div class="flex gap-2 pointer-events-auto flex-wrap justify-end">
         <button id="sound-toggle-btn" class="bg-slate-900/90 hover:bg-slate-800 border border-cyan-500/40 text-cyan-300 px-4 py-2 rounded-lg text-xs font-semibold tracking-wider transition flex items-center gap-1">
           🔊 AUDIO: <span id="sound-state" class="text-emerald-400">ON</span>
         </button>
         <button id="recenter-btn" class="bg-slate-900/90 hover:bg-slate-800 border border-cyan-500/40 text-cyan-300 px-4 py-2 rounded-lg text-xs font-semibold tracking-wider transition">
           RESTART DIVE
         </button>
-        <button id="enter-vr-btn" class="bg-cyan-600/90 hover:bg-cyan-500 border border-cyan-300/50 text-white px-4 py-2 rounded-lg text-xs font-bold tracking-wider transition shadow-lg flex items-center gap-1">
+        <button id="enter-vr-btn" class="bg-cyan-700/90 hover:bg-cyan-600 border border-cyan-400/50 text-white px-4 py-2 rounded-lg text-xs font-bold tracking-wider transition flex items-center gap-1 shadow-lg shadow-cyan-900/50">
           👓 ENTER VR
         </button>
       </div>
@@ -98,9 +100,15 @@
   </div>
 
   <!-- A-Frame VR Scene -->
-  <a-scene embedded vr-mode-ui="enabled: false" renderer="antialias: true; colorManagement: true; alpha: false;" fog="type: exponential; color: #88ccff; density: 0.005">
+  <a-scene embedded renderer="antialias: true; colorManagement: true; alpha: false;" fog="type: exponential; color: #88ccff; density: 0.012">
     
-    <a-assets timeout="3000"></a-assets>
+    <!-- ASSET MANAGER FOR CUSTOM 3D MODELS -->
+    <a-assets timeout="3000">
+      <!-- ⚠️ WARNING: If these paths are active but the files are missing, it causes a Script Error! -->
+      <!-- To use your custom models, uncomment these lines when the files exist in your folder -->
+      <!-- <a-asset-item id="custom-whale-model" src="models/whale.glb"></a-asset-item> -->
+      <!-- <a-asset-item id="custom-fish-model" src="models/fish.glb"></a-asset-item> -->
+    </a-assets>
 
     <!-- Environment Lighting -->
     <a-light id="sunlight" type="directional" color="#ffffff" intensity="1.8" position="0 80 20"></a-light>
@@ -109,29 +117,21 @@
     <!-- Sky dome (Visible at surface) -->
     <a-sky id="ocean-sky" color="#88ccff"></a-sky>
 
-    <!-- SUN ABOVE THE WATER -->
-    <a-sphere
-      id="surface-sun"
-      position="0 95 -220"
-      radius="24"
-      material="shader: flat; color: #ffcc00; fog: false">
-    </a-sphere>
-
-    <!-- CAMERA RIG -->
-    <a-entity id="rig" position="0 7 0">
+    <!-- CAMERA RIG (Starts bobbing at surface) -->
+    <a-entity id="rig" position="0 0 0" animation="property: position; dir: alternate; dur: 2500; to: 0 0.8 0; loop: true; easing: easeInOutSine">
       <a-camera id="camera" look-controls="pointerLockEnabled: false; magicWindowTrackingEnabled: true" wasd-controls="enabled: false" near="0.1">
         
+        <!-- 3D VR HUD Container (hidden in VR mode) -->
+        <a-entity id="vr-hud-container" position="0 -0.3 -0.8">
+          <a-text id="vr-depth-display" value="DEPTH: 0.0 M" color="#00ffff" align="center" width="1.2" opacity="0.85" font="monoid" text=""></a-text>
+          <a-text id="vr-zone-display" value="Phase 1: Epipelagic" color="#aaddff" align="center" width="0.7" position="0 -0.08 0" opacity="0.6" font="monoid" text=""></a-text>
+        </a-entity>
+
         <!-- Spotlight Headlamp -->
         <a-light id="flashlight" type="spot" color="#cceeff" intensity="0" angle="35" penumbra="0.7" distance="90" position="0 0.1 0"></a-light>
         
         <!-- Exhale Bubbles Spawn Point -->
         <a-entity id="player-bubbles"></a-entity>
-
-        <!-- 3D VR Telemetry HUD (Attached directly to headset vision) -->
-        <a-entity id="vr-hud-container" position="0 -0.45 -1.2" visible="false">
-          <a-text id="vr-depth-display" value="0.0 M" align="center" width="2.5" color="#00f0ff" font="monoid"></a-text>
-          <a-text id="vr-zone-display" value="Epipelagic Zone" align="center" position="0 -0.15 0" width="1.5" color="#88ccff" font="monoid"></a-text>
-        </a-entity>
 
       </a-camera>
 
@@ -139,19 +139,13 @@
       <a-entity id="particle-container"></a-entity>
     </a-entity>
 
-    <!-- MOVING OCEAN SURFACE -->
-    <a-entity
-      id="water-surface"
-      geometry="primitive: plane; width: 1000; height: 1000; segmentsWidth: 120; segmentsHeight: 120"
-      rotation="-90 0 0"
-      position="0 4 0"
-      material="shader: flat; color: #21a6c9; transparent: true; opacity: 0.72; side: double; depthWrite: false">
-    </a-entity>
+    <!-- SURFACE PLANE (Visible looking up) -->
+    <a-plane id="water-surface" position="0 1.5 0" rotation="90 0 0" scale="600 600 1" color="#aaddff" opacity="0.6" material="transparent: true; shader: flat; side: double"></a-plane>
 
     <!-- DYNAMIC CREATURES CONTAINER -->
     <a-entity id="dynamic-creatures"></a-entity>
 
-    <!-- STAGE 4: HADAL TRENCH & THE COLOSSAL MAW -->
+    <!-- STAGE 4: HADAL TRENCH & THE COLOSSAL MAW (Kept at extreme depth as finale) -->
     <a-entity id="stage-4-group" position="0 -450 0">
       <a-entity id="colossal-entity" position="0 -50 -35">
         <!-- Giant Luminescent Red Eyes -->
@@ -187,22 +181,18 @@
     let isMuted = false;
     let currentDepth = 0; 
     const maxDepth = 480; 
-    const descentSpeed = 1.3;
+    const descentSpeed = 1.3; // Slower, agonizing descent (1.3 m/s)
 
     // DOM Elements
-    const uiOverlay = document.getElementById('ui-overlay');
     const startScreen = document.getElementById('start-screen');
     const startBtn = document.getElementById('start-btn');
     const recenterBtn = document.getElementById('recenter-btn');
-    const soundToggleBtn = document.getElementById('sound-toggle-btn');
     const enterVrBtn = document.getElementById('enter-vr-btn');
+    const soundToggleBtn = document.getElementById('sound-toggle-btn');
     const soundState = document.getElementById('sound-state');
     const depthDisplay = document.getElementById('depth-display');
     const zoneDisplay = document.getElementById('zone-display');
     const statusDisplay = document.getElementById('descent-status');
-    const vrDepthDisplay = document.getElementById('vr-depth-display');
-    const vrZoneDisplay = document.getElementById('vr-zone-display');
-    const vrHudContainer = document.getElementById('vr-hud-container');
     
     // A-Frame Entities
     const cameraRig = document.getElementById('rig');
@@ -212,6 +202,7 @@
     const sunlight = document.getElementById('sunlight');
     const ambientLight = document.getElementById('ambient-light');
     const flashlight = document.getElementById('flashlight');
+    const colossalEntity = document.getElementById('colossal-entity');
 
     // --- Web Audio Engine ---
     let audioCtx = null;
@@ -295,20 +286,22 @@
     }
 
     function scheduleBreathing() {
-      if (!isDiving || currentDepth < 3 || isMuted || !audioCtx) {
+      if (!isDiving || isMuted || !audioCtx) {
         setTimeout(scheduleBreathing, 1000);
         return;
       }
       
-      let rate = 1 + (currentDepth / maxDepth) * 2.0;
+      let rate = 1 + (currentDepth / maxDepth) * 2.0; // Breathe faster as depth increases
       let breathDur = 4500 / rate;
       
+      // Audio Envelope for Exhale
       const now = audioCtx.currentTime;
       breatheGain.gain.cancelScheduledValues(now);
       breatheGain.gain.setValueAtTime(0.001, now);
       breatheGain.gain.linearRampToValueAtTime(0.18, now + (breathDur/1000) * 0.3);
       breatheGain.gain.linearRampToValueAtTime(0.001, now + (breathDur/1000) * 0.9);
 
+      // Visual Bubbles Sync
       let bubbleCount = 3 + Math.floor(Math.random() * 4);
       for(let i=0; i < bubbleCount; i++) {
         setTimeout(spawnPlayerBubble, i * 150);
@@ -318,7 +311,7 @@
     }
 
     function spawnPlayerBubble() {
-      if (!isDiving || currentDepth < 3) return;
+      if (!isDiving) return;
       const container = document.getElementById('player-bubbles');
       if (!container) return;
 
@@ -346,8 +339,8 @@
         const gain = audioCtx.createGain();
         osc.type = 'triangle';
         
-        const freq = 45 + (currentDepth / maxDepth) * 45;
-        const vol = 0.08 + (currentDepth / maxDepth) * 0.45;
+        const freq = 45 + (currentDepth / maxDepth) * 45; // Thumps get higher pitched
+        const vol = 0.08 + (currentDepth / maxDepth) * 0.45; // Get significantly louder
 
         osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(25, audioCtx.currentTime + 0.16);
@@ -365,10 +358,11 @@
     function scheduleHeartbeat() {
       playHeartbeatSound();
       const factor = Math.min(currentDepth / maxDepth, 1);
-      const nextDelay = 1300 - (factor * 950);
+      const nextDelay = 1300 - (factor * 950); // Beats much faster under pressure
       setTimeout(scheduleHeartbeat, nextDelay);
     }
 
+    // Removing static random bubbles to favor player breathing mechanics
     function updateAudioParams(depth) {
       if (!audioCtx || !ambientGain || !bassGain) return;
       const ratio = Math.min(depth / maxDepth, 1);
@@ -376,8 +370,12 @@
       bassOsc.frequency.setTargetAtTime(50 - ratio * 22, audioCtx.currentTime, 0.4);
     }
 
-    // --- Procedural Particles ---
+    // --- Procedural Scene Content Setup ---
     function setupProceduralElements() {
+      // Removed orbiting fish that caused the spinning optical illusion (vection).
+      // We will now rely on the main linear dynamic spawner even at the surface.
+
+      // Marine particles
       const particleContainer = document.getElementById('particle-container');
       if (particleContainer && particleContainer.children.length === 0) {
         for (let i = 0; i < 75; i++) {
@@ -414,65 +412,42 @@
       return rgbToHex(r, g, b);
     }
 
-    function animateWaterSurface(time) {
-      const surface = document.getElementById('water-surface');
-      if (!surface) return;
-
-      const mesh = surface.getObject3D('mesh');
-      if (!mesh) return;
-
-      const geometry = mesh.geometry;
-      const positions = geometry.attributes.position;
-      const t = time * 0.001;
-
-      for (let i = 0; i < positions.count; i++) {
-        const x = positions.getX(i);
-        const y = positions.getY(i);
-
-        const wave =
-          Math.sin(x * 0.08 + t * 0.7) * 0.45 +
-          Math.sin(y * 0.11 + t * 0.5) * 0.3 +
-          Math.sin((x + y) * 0.06 + t) * 0.2;
-
-        positions.setZ(i, wave * 0.35);
-      }
-
-      positions.needsUpdate = true;
-      geometry.computeVertexNormals();
-    }
-
     function updateEnvironmentStage(depth) {
       let skyColor, fogDensity, sunIntensity, zoneName, fogColor;
 
       if (depth < 50) {
-        const t = Math.min(Math.max((depth - 5) / 45, 0), 1);
+        // Phase 1: Epipelagic
+        const t = depth / 50;
         skyColor = interpolateColor('#88ccff', '#004f77', t);
         fogColor = skyColor;
-        fogDensity = 0.005 + t * 0.008;
+        fogDensity = 0.005 + t * 0.008; // Reduced fog for better visibility
         sunIntensity = 1.8 * (1 - t * 0.6);
         zoneName = "Phase 1: Epipelagic (Sunlight Zone)";
         flashlight.setAttribute('light', 'intensity', 0);
       } else if (depth < 150) {
+        // Phase 2: Mesopelagic
         const t = (depth - 50) / 100;
         skyColor = interpolateColor('#004f77', '#000c14', t);
         fogColor = skyColor;
-        fogDensity = 0.013 + t * 0.012;
+        fogDensity = 0.013 + t * 0.012; // Reduced fog for better visibility
         sunIntensity = 0.72 * (1 - t);
         zoneName = "Phase 2: Mesopelagic (Twilight Zone)";
         flashlight.setAttribute('light', 'intensity', t * 0.8);
       } else if (depth < 300) {
+        // Phase 3: Bathypelagic
         const t = (depth - 150) / 150;
         skyColor = interpolateColor('#000c14', '#000204', t);
         fogColor = skyColor;
-        fogDensity = 0.025 + t * 0.015;
+        fogDensity = 0.025 + t * 0.015; // Reduced fog for better visibility
         sunIntensity = 0;
         zoneName = "Phase 3: Bathypelagic (Midnight Abyss)";
         flashlight.setAttribute('light', 'intensity', 0.8 + t * 0.7);
       } else {
+        // Phase 4: Hadal Trench
         const t = Math.min((depth - 300) / 180, 1);
         skyColor = '#000204';
         fogColor = '#000204';
-        fogDensity = 0.040 + t * 0.020;
+        fogDensity = 0.040 + t * 0.020; // Reduced fog for better visibility
         sunIntensity = 0;
         zoneName = "Phase 4: Hadal Trench (The Deep Void)";
         flashlight.setAttribute('light', 'intensity', 1.5 + t * 0.5);
@@ -482,15 +457,11 @@
       sceneEl.setAttribute('fog', `type: exponential; color: ${fogColor}; density: ${fogDensity}`);
       sunlight.setAttribute('light', 'intensity', sunIntensity);
       ambientLight.setAttribute('light', 'intensity', Math.max(0.9 - (depth / maxDepth) * 0.85, 0.04));
-
-      const sun = document.getElementById('surface-sun');
-      if (sun) {
-        const fade = Math.min(Math.max((depth - 5) / 30, 0), 1);
-        const sunColor = interpolateColor('#ffcc00', '#f0f4ff', fade);
-        sun.setAttribute('material', 'color', sunColor);
-        sun.setAttribute('visible', depth < 35);
-      }
+      
       zoneDisplay.textContent = zoneName;
+      
+      // Update 3D VR HUD
+      const vrZoneDisplay = document.getElementById('vr-zone-display');
       if (vrZoneDisplay) vrZoneDisplay.setAttribute('value', zoneName);
     }
 
@@ -502,9 +473,11 @@
       const creature = document.createElement('a-entity');
       const rigPos = cameraRig.getAttribute('position');
       
-      const camRot = cameraEl.getAttribute('rotation');
+      // Safely calculate player's current looking direction using A-Frame attributes
+      const camRot = cameraEl.getAttribute('rotation'); // returns {x, y, z} in degrees
       const lookAngle = camRot ? (camRot.y * (Math.PI / 180)) : 0; 
       
+      // ADJUSTED PROBABILITIES: Fewer giants, more small fish to reduce crowding
       let tier = 1;
       const r = Math.random();
       
@@ -513,43 +486,59 @@
       } else if (currentDepth < 60) {
         tier = r < 0.75 ? 1 : 2; // 75% fish, 25% rays
       } else if (currentDepth < 110) {
+        if (r < 0.60) tier = 1; // 60% fish
+        else if (r < 0.80) tier = 2; // 20% rays
+        else tier = 3; // 20% dolphins
+      } else if (currentDepth < 180) {
         if (r < 0.50) tier = 1; // 50% fish
         else if (r < 0.65) tier = 2; // 15% rays
-        else tier = 3; // 35% dolphins
-      } else if (currentDepth < 180) {
-        if (r < 0.35) tier = 1; // 35% fish
-        else if (r < 0.45) tier = 2; // 10% rays
-        else if (r < 0.75) tier = 3; // 30% dolphins
-        else tier = 4; // 25% whales
+        else if (r < 0.85) tier = 3; // 20% dolphins
+        else tier = 4; // 15% whales
       } else {
-        if (r < 0.25) tier = 1; // 25% fish
-        else if (r < 0.35) tier = 2; // 10% rays
-        else if (r < 0.55) tier = 3; // 20% dolphins
-        else if (r < 0.75) tier = 4; // 20% whales
-        else tier = 5; // 25% leviathans
+        if (r < 0.40) tier = 1; // 40% fish
+        else if (r < 0.55) tier = 2; // 15% rays
+        else if (r < 0.70) tier = 3; // 15% dolphins
+        else if (r < 0.85) tier = 4; // 15% whales
+        else tier = 5; // 15% leviathans
       }
 
+      // Keep creatures strict to the periphery (approx 60-80 degrees left or right)
       const sideMultiplier = Math.random() > 0.5 ? 1 : -1;
       const offsetAngle = lookAngle + (sideMultiplier * (Math.PI / 2.5)); 
       
+      // POSITION FIX: Push larger creatures much further out into the distance
       const fogFactor = Math.min(currentDepth / 300, 1);
       let dist;
       if (tier === 1) {
-        dist = 5 + (Math.random() * 5); // Much closer for herring (5-10m)
+        dist = 5 + (Math.random() * 5); // Herring swarms (5-10m) - Very Close
+      } else if (tier === 2) {
+        dist = 15 + (Math.random() * 10); // Rays (15-25m)
+      } else if (tier === 3) {
+        dist = 30 + (Math.random() * 15); // Dolphins (30-45m)
+      } else if (tier === 4) {
+        dist = 50 + (Math.random() * 20); // Whales (50-70m) - Far
       } else {
-        dist = 30 - (fogFactor * 15) + (Math.random() * 15);
+        dist = 70 + (Math.random() * 30); // Leviathans (70-100m) - Very Far
+      }
+      
+      // Slightly pull them in if fog is thick, but max 25% closer so they don't get too near
+      if (tier > 1) {
+        dist = dist - (fogFactor * (dist * 0.25)); 
       }
       
       const spawnX = Math.sin(offsetAngle) * dist;
       const spawnZ = Math.cos(offsetAngle) * dist;
       
+      // Ensure they always spawn underwater (below rigPos.y)
       const spawnY = rigPos.y - 2 - (Math.random() * 15); 
 
       creature.setAttribute('position', `${spawnX} ${spawnY} ${spawnZ}`);
       
+      // Make them swim PARALLEL to the player's view or away from the center
       const swimTargetX = spawnX - Math.sin(lookAngle) * 200;
       const swimTargetZ = spawnZ - Math.cos(lookAngle) * 200;
       
+      // ROTATION FIX: Calculate rotation so they face the direction they are swimming
       const dx = swimTargetX - spawnX;
       const dz = swimTargetZ - spawnZ;
       const swimRotY = (Math.atan2(dx, dz) * (180 / Math.PI)); 
@@ -558,30 +547,36 @@
       let animDuration = 40000;
 
       if (tier === 1) {
+        // Size 1: Herring Swarm (Custom Models) - Slowed down movement because model contains swarm animation
         creature.innerHTML = `
           <a-gltf-model src="models/school_of_herring.glb" scale="5 5 5" animation-mixer="clip: *; timeScale: 1.0"></a-gltf-model>
         `;
-        animDuration = 90000;
+        animDuration = 90000; // Extremely slow forward trajectory so the circle swarm looks natural
       } else if (tier === 2) {
+        // Size 2: Medium (Rays / Turtles)
         creature.innerHTML = `
           <a-gltf-model src="models/ray.glb" scale="0.3 0.3 0.3" animation-mixer="clip: *; timeScale: 1.0"></a-gltf-model>
         `;
         animDuration = 30000;
       } else if (tier === 3) {
+        // Size 3: Large (Dolphins / Sharks)
         creature.innerHTML = `
           <a-gltf-model src="models/dolphin.glb" scale="45 45 45" animation-mixer="clip: *; timeScale: 1.0"></a-gltf-model>
         `;
-        animDuration = 20000;
+        animDuration = 20000; // Fast moving
       } else if (tier === 4) {
+        // Size 4: Giant (Whales)
+        // Direct model loading - scaled and animated!
         creature.innerHTML = `
-          <a-gltf-model src="models/whale.glb" scale="3 3 3" rotation="0 180 0" animation-mixer="clip: *; timeScale: 0.8"></a-gltf-model>
+            <a-gltf-model src="models/whale.glb" scale="3 3 3" rotation="0 180 0" animation-mixer="clip: *; timeScale: 0.8"></a-gltf-model>
         `;
-        animDuration = 45000;
+        animDuration = 45000; // Slow, massive movement
       } else if (tier === 5) {
+        // Size 5: Colossal Leviathan (Deep Abyss)
         creature.innerHTML = `
           <a-gltf-model src="models/blue_whale.glb" scale="5 5 5" animation-mixer="clip: *; timeScale: 1.0"></a-gltf-model>
         `;
-        animDuration = 60000;
+        animDuration = 60000; // Extremely slow, ominous
       }
 
       creature.setAttribute('animation', `property: position; to: ${swimTargetX} ${spawnY} ${swimTargetZ}; dur: ${animDuration}; easing: linear`);
@@ -598,16 +593,15 @@
     let spawnTimer = 0;
 
     function animateDescent(timestamp) {
-      animateWaterSurface(timestamp);
       if (!lastTimestamp) lastTimestamp = timestamp;
       const deltaTime = (timestamp - lastTimestamp) / 1000;
       lastTimestamp = timestamp;
 
-      const spawnInterval = Math.max(
-        4000,
-        8000 - (currentDepth / maxDepth) * 4000
-      );
-
+      // Slower spawning intervals so the ocean doesn't feel artificially crowded
+      const spawnInterval = isDiving 
+        ? Math.max(4000, 8000 - (currentDepth / maxDepth) * 4000)
+        : 5000; // Spawn every 5 seconds while waiting at the surface
+        
       if (timestamp - spawnTimer > spawnInterval) {
         spawnCreepyCreature();
         spawnTimer = timestamp;
@@ -617,24 +611,12 @@
         currentDepth += descentSpeed * deltaTime;
         if (currentDepth > maxDepth) currentDepth = maxDepth;
 
-        cameraRig.setAttribute('position', `0 ${7-currentDepth} 0`);
-        const waterSurface = document.getElementById('water-surface');
-
-        if (waterSurface) {
-          const fadeStart = 2.5;
-          const fadeEnd = 10;
-          const fade = Math.min(
-            Math.max((currentDepth - fadeStart) / (fadeEnd - fadeStart), 0),
-            1
-          );
-
-          waterSurface.setAttribute('visible', fade < 1);
-          waterSurface.setAttribute('material', 'opacity', 0.72 * (1 - fade));
-        }
-
-        const formattedDepth = currentDepth.toFixed(1);
-        depthDisplay.textContent = formattedDepth;
-        if (vrDepthDisplay) vrDepthDisplay.setAttribute('value', `${formattedDepth} M`);
+        cameraRig.setAttribute('position', `0 ${-currentDepth} 0`);
+        depthDisplay.textContent = currentDepth.toFixed(1);
+        
+        // Update 3D VR HUD
+        const vrDepthDisplay = document.getElementById('vr-depth-display');
+        if (vrDepthDisplay) vrDepthDisplay.setAttribute('value', `DEPTH: ${currentDepth.toFixed(1)} M`);
 
         updateEnvironmentStage(currentDepth);
         updateAudioParams(currentDepth);
@@ -649,14 +631,14 @@
       requestAnimationFrame(animateDescent);
     }
 
-    // --- UI Controls & Event Listeners ---
+    // --- UI Controls ---
     startBtn.addEventListener('click', () => {
       initAudio();
       if (audioCtx && audioCtx.state === 'suspended') {
         audioCtx.resume();
       }
       isDiving = true;
-      cameraRig.removeAttribute('animation');
+      cameraRig.removeAttribute('animation'); // Stop surface bobbing
       startScreen.classList.add('hidden');
       statusDisplay.textContent = "Sinking Uncontrollably...";
     });
@@ -673,13 +655,9 @@
     recenterBtn.addEventListener('click', () => {
       isDiving = false;
       currentDepth = 0;
-      spawnTimer = performance.now();
-      cameraRig.setAttribute('position', '0 7 0');
-      document.getElementById('water-surface').setAttribute('visible', true);
-      document.getElementById('water-surface').setAttribute('material', 'opacity', 0.72);
-      
+      cameraRig.setAttribute('position', '0 0 0');
+      cameraRig.setAttribute('animation', 'property: position; dir: alternate; dur: 2500; to: 0 0.8 0; loop: true; easing: easeInOutSine');
       depthDisplay.textContent = '0.0';
-      if (vrDepthDisplay) vrDepthDisplay.setAttribute('value', '0.0 M');
       startScreen.classList.remove('hidden');
       statusDisplay.textContent = "Surface Ready";
       updateEnvironmentStage(0);
@@ -694,63 +672,39 @@
       setupProceduralElements();
     });
 
-    // VR Mode Button & Event Handlers (with 15-second auto-start countdown)
-    let vrCountdownTimer = null;
-
     enterVrBtn.addEventListener('click', () => {
-      initAudio();
-      if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-
-      // Request fullscreen mode across browsers before entering VR
+      // Force native full-screen mode on browser canvas for mobile VR compatibility
       const docEl = document.documentElement;
       if (docEl.requestFullscreen) {
-        docEl.requestFullscreen();
-      } else if (docEl.webkitRequestFullscreen) {
+        docEl.requestFullscreen().catch(() => {});
+      } else if (docEl.webkitRequestFullscreen) { /* Safari / iOS */
         docEl.webkitRequestFullscreen();
+      } else if (docEl.msRequestFullscreen) { /* IE11 */
+        docEl.msRequestFullscreen();
       }
 
-      sceneEl.enterVR();
-
-      // If dive hasn't started yet, give 15 seconds to put on the headset
-      if (!isDiving) {
-        let secondsLeft = 15;
-        statusDisplay.textContent = `Get Ready! Starting in ${secondsLeft}s...`;
-        
-        if (vrCountdownTimer) clearInterval(vrCountdownTimer);
-        
-        vrCountdownTimer = setInterval(() => {
-          secondsLeft--;
-          if (secondsLeft > 0) {
-            statusDisplay.textContent = `Get Ready! Starting in ${secondsLeft}s...`;
-          } else {
-            clearInterval(vrCountdownTimer);
-            vrCountdownTimer = null;
-            
-            // Auto-start the dive
-            isDiving = true;
-            cameraRig.removeAttribute('animation');
-            startScreen.classList.add('hidden');
-            statusDisplay.textContent = "Sinking Uncontrollably...";
-          }
-        }, 1000);
+      if (sceneEl.hasLoaded) {
+        sceneEl.enterVR(); // Forces A-Frame into VR / Fullscreen Stereoscopic mode
       }
     });
 
+    // --- VR Display Management ---
+    // Automatically hide all 2D HTML menus and 3D VR HUD text when VR mode is active
     sceneEl.addEventListener('enter-vr', () => {
-      uiOverlay.style.display = 'none';
-      if (vrHudContainer) vrHudContainer.setAttribute('visible', 'false');
+      document.getElementById('ui-overlay').style.display = 'none';
+      const vrHud = document.getElementById('vr-hud-container');
+      if (vrHud) vrHud.setAttribute('visible', 'false');
     });
-
+    
+    // Restore the 2D HTML menus and 3D VR HUD when exiting VR mode
     sceneEl.addEventListener('exit-vr', () => {
-      uiOverlay.style.display = 'flex';
-      if (vrHudContainer) vrHudContainer.setAttribute('visible', 'false');
+      document.getElementById('ui-overlay').style.display = 'flex';
+      const vrHud = document.getElementById('vr-hud-container');
+      if (vrHud) vrHud.setAttribute('visible', 'true');
     });
 
-    // App Initialization
+    // Safely Initialize Scene Elements
     const initApp = () => {
-      updateEnvironmentStage(0);
       if (sceneEl.hasLoaded) {
         setupProceduralElements();
         requestAnimationFrame(animateDescent);
@@ -762,6 +716,7 @@
       }
     };
     
+    // Start initialization
     initApp();
 
   </script>
