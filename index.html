@@ -694,7 +694,9 @@
       setupProceduralElements();
     });
 
-    // VR Mode Button & Event Handlers
+    // VR Mode Button & Event Handlers (with 15-second auto-start countdown)
+    let vrCountdownTimer = null;
+
     enterVrBtn.addEventListener('click', () => {
       initAudio();
       if (audioCtx && audioCtx.state === 'suspended') {
@@ -710,6 +712,30 @@
       }
 
       sceneEl.enterVR();
+
+      // If dive hasn't started yet, give 15 seconds to put on the headset
+      if (!isDiving) {
+        let secondsLeft = 15;
+        statusDisplay.textContent = `Get Ready! Starting in ${secondsLeft}s...`;
+        
+        if (vrCountdownTimer) clearInterval(vrCountdownTimer);
+        
+        vrCountdownTimer = setInterval(() => {
+          secondsLeft--;
+          if (secondsLeft > 0) {
+            statusDisplay.textContent = `Get Ready! Starting in ${secondsLeft}s...`;
+          } else {
+            clearInterval(vrCountdownTimer);
+            vrCountdownTimer = null;
+            
+            // Auto-start the dive
+            isDiving = true;
+            cameraRig.removeAttribute('animation');
+            startScreen.classList.add('hidden');
+            statusDisplay.textContent = "Sinking Uncontrollably...";
+          }
+        }, 1000);
+      }
     });
 
     sceneEl.addEventListener('enter-vr', () => {
